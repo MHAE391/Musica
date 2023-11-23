@@ -16,6 +16,7 @@ abstract class BaseRecyclerViewAdapter<T>(private val callback: ((item: T) -> Un
 
     private var _items: MutableList<T> = mutableListOf()
 
+
     /**
      * Returns the _items data
      */

@@ -1,12 +1,14 @@
 package com.m391.musica.utils
 
 import android.graphics.Color
+import android.media.MediaMetadataRetriever
 import android.widget.ImageView
-import androidx.core.net.toUri
 import androidx.databinding.BindingAdapter
 import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
+import com.bumptech.glide.Glide
+import com.m391.musica.R
 import com.squareup.picasso.Picasso
 
 object Binding {
@@ -23,21 +25,28 @@ object Binding {
         }
     }
 
-    @BindingAdapter(value = ["android:imageUrl", "android:imageId"], requireAll = false)
+    @BindingAdapter("android:imageUrl")
     @JvmStatic
-    fun loadImage(imageView: ImageView, imageUrl: String, imageId: Long?) {
-        val path = if (imageId != null && imageId == 0.toLong()) {
-            imageUrl
-        } else {
-            "file://$imageUrl"
-        }
+    fun loadImage(imageView: ImageView, imageUrl: String) {
         val circularProgressDrawable = CircularProgressDrawable(imageView.context)
         circularProgressDrawable.strokeWidth = 5f
         circularProgressDrawable.centerRadius = 30f
         circularProgressDrawable.setColorSchemeColors(Color.TRANSPARENT)
         circularProgressDrawable.start()
-        Picasso.get().load(path)
-            .placeholder(circularProgressDrawable)
-            .into(imageView)
+        val image = getAlbumArt(imageUrl)
+        if (image != null)
+            Glide.with(imageView.context).asBitmap().placeholder(circularProgressDrawable)
+                .load(image).into(imageView)
+        else
+            Glide.with(imageView.context).load(R.drawable.music).into(imageView)
+
+    }
+
+    private fun getAlbumArt(uri: String): ByteArray? {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(uri)
+        val art = retriever.embeddedPicture
+        retriever.release()
+        return art
     }
 }
