@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
@@ -19,7 +20,11 @@ class PlayerFragment : Fragment() {
     private val args: PlayerFragmentArgs by navArgs()
     private val songsViewModel: SongsViewModel by activityViewModels()
     private val viewModel: PlayerViewModel by viewModels {
-        PlayerViewModelFactory(args.songPosition, songsViewModel.deviceSongs)
+        PlayerViewModelFactory(
+            requireActivity().application,
+            args.songPosition,
+            songsViewModel.deviceSongs
+        )
     }
 
     override fun onCreateView(
@@ -28,9 +33,25 @@ class PlayerFragment : Fragment() {
     ): View {
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
-        viewModel.currentPlayingSong.observe(viewLifecycleOwner) {
-            binding.text.text = it.toString()
-        }
         return binding.root
     }
+
+    override fun onStart() {
+        super.onStart()
+        binding.next.setOnClickListener {
+            viewModel.onNextPreviousButtonClicked(1, binding.playPause)
+        }
+        binding.previous.setOnClickListener {
+            viewModel.onNextPreviousButtonClicked(-1, binding.playPause)
+        }
+        binding.playPause.setOnClickListener {
+            if (it.tag == getString(R.string.play)) {
+                viewModel.setOnPlayButtonClicked(binding.playPause)
+            } else {
+                viewModel.setOnPauseButtonClicked(binding.playPause)
+            }
+        }
+        viewModel.setProgressListener(binding.durationSeekBar)
+    }
+
 }
