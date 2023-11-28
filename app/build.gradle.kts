@@ -4,6 +4,9 @@ plugins {
     id("kotlin-kapt")
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.devtools.ksp") version "1.8.10-1.0.9" apply false
+
+
 }
 
 android {
@@ -80,5 +83,9 @@ dependencies {
 
     implementation("com.squareup.picasso:picasso:2.8")
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    implementation("androidx.room:room-runtime:2.6.0")
+    implementation("androidx.room:room-ktx:2.6.0")
+    kapt("androidx.room:room-compiler:2.6.0")
 
 }

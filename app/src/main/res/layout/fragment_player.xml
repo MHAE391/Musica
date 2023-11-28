@@ -13,6 +13,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/white"
         tools:context=".ui.player.PlayerFragment">
 
         <RelativeLayout
@@ -167,6 +168,16 @@
                     android:layout_weight="1"
                     android:contentDescription="@string/app_name"
                     android:src="@drawable/baseline_keyboard_double_arrow_right_24" />
+
+                <ImageView
+                    android:id="@+id/favorite"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="end|center"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/baseline_favorite_border_24" />
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>

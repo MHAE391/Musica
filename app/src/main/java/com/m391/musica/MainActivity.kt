@@ -9,11 +9,20 @@ import androidx.core.content.ContextCompat
 import com.m391.musica.databinding.ActivityMainBinding
 import android.Manifest
 import android.annotation.SuppressLint
+import androidx.activity.viewModels
+import androidx.fragment.app.activityViewModels
+import com.m391.musica.database.AppDatabase
+import com.m391.musica.database.MusicDAO
+import com.m391.musica.services.SongService
+import com.m391.musica.ui.shared_view_models.SongsViewModel
+import com.m391.musica.ui.shared_view_models.SongsViewModelFactory
 
 class MainActivity : AppCompatActivity() {
     private val binding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (!isGranted) {

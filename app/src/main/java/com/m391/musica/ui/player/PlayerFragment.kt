@@ -10,8 +10,11 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import com.m391.musica.R
+import com.m391.musica.database.AppDatabase
+import com.m391.musica.database.MusicDAO
 import com.m391.musica.databinding.FragmentPlayerBinding
 import com.m391.musica.ui.shared_view_models.SongsViewModel
+import com.m391.musica.utils.toDatabaseModel
 
 class PlayerFragment : Fragment() {
     private val binding: FragmentPlayerBinding by lazy {
@@ -19,11 +22,20 @@ class PlayerFragment : Fragment() {
     }
     private val args: PlayerFragmentArgs by navArgs()
     private val songsViewModel: SongsViewModel by activityViewModels()
+
     private val viewModel: PlayerViewModel by viewModels {
-        PlayerViewModelFactory(
+        if (args.songDestination == getString(R.string.home))
+            PlayerViewModelFactory(
+                requireActivity().application,
+                args.songPosition,
+                songsViewModel.deviceSongs,
+                songsViewModel.checkFavourite
+            )
+        else PlayerViewModelFactory(
             requireActivity().application,
             args.songPosition,
-            songsViewModel.deviceSongs
+            songsViewModel.favouriteSongs,
+            songsViewModel.checkFavourite
         )
     }
 
@@ -52,6 +64,32 @@ class PlayerFragment : Fragment() {
             }
         }
         viewModel.setProgressListener(binding.durationSeekBar)
+        viewModel.isFavourite.observe(viewLifecycleOwner) {
+            if (it == true) {
+                setFavoriteImage(binding.favorite)
+            } else {
+                setNotFavoriteImage(binding.favorite)
+            }
+        }
+        binding.favorite.setOnClickListener {
+            if (it.tag == getString(R.string.favourite)) {
+                setNotFavoriteImage(binding.favorite)
+                songsViewModel.setSongNotFavourite(viewModel.currentPlayingSong.value!!.toDatabaseModel())
+            } else {
+                setFavoriteImage(binding.favorite)
+                songsViewModel.setSongFavorite(viewModel.currentPlayingSong.value!!.toDatabaseModel())
+            }
+        }
+    }
+
+    private fun setFavoriteImage(imageView: ImageView) {
+        imageView.tag = getString(R.string.favourite)
+        imageView.setImageResource(R.drawable.baseline_favorite_24)
+    }
+
+    private fun setNotFavoriteImage(imageView: ImageView) {
+        imageView.tag = getString(R.string.not_favourite)
+        imageView.setImageResource(R.drawable.baseline_favorite_border_24)
     }
 
 }

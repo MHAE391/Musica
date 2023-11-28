@@ -7,14 +7,14 @@
 
         <variable
             name="viewModel"
-            type="com.m391.musica.ui.home.HomeViewModel" />
+            type="com.m391.musica.ui.favourite.FavouriteViewModel" />
     </data>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/white"
-        tools:context=".ui.home.HomeFragment">
+        tools:context=".ui.favourite.FavouriteFragment">
 
         <RelativeLayout
             android:id="@+id/header"
@@ -36,42 +36,13 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:gravity="center"
-                android:text="@string/app_name"
+                android:text="@string/favourites"
                 android:textColor="@color/black"
                 android:textSize="25sp"
                 android:textStyle="italic|bold"
                 android:visibility="visible"
                 tools:ignore="RelativeOverlap" />
 
-            <androidx.appcompat.widget.SearchView
-                android:id="@+id/searchView"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:gravity="center"
-                android:imeOptions="actionSearch"
-                android:inputType="text"
-                app:animateNavigationIcon="true"
-                app:iconifiedByDefault="true"
-                app:queryHint="Title" />
-
-            <ImageButton
-                android:id="@+id/favorite"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:layout_gravity="start|center"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:background="@color/white"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:src="@drawable/baseline_favorite_24"
-                tools:ignore="ContentDescription,UnusedAttribute,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
         </RelativeLayout>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -83,8 +54,8 @@
             android:layout_marginTop="5dp"
             android:layout_marginEnd="5dp"
             android:layout_marginBottom="5dp"
-            android:liveData="@{viewModel.songs}"
             android:padding="5dp"
+            android:liveData="@{viewModel.songs}"
             android:scrollbars="none" />
     </RelativeLayout>
 </layout>

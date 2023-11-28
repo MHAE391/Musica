@@ -45,7 +45,7 @@ abstract class BaseRecyclerViewAdapter<T>(private val callback: ((item: T) -> Un
         }
     }
 
-    private fun getItem(position: Int) = _items[position]
+    fun getItem(position: Int) = _items[position]
 
     /**
      * Adds data to the actual Dataset
@@ -55,6 +55,18 @@ abstract class BaseRecyclerViewAdapter<T>(private val callback: ((item: T) -> Un
     @SuppressLint("NotifyDataSetChanged")
     fun addData(items: List<T>) {
         _items.addAll(items)
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun addItem(item: T, position: Int) {
+        _items.add(position, item)
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun removeItem(item: T) {
+        _items.remove(item)
         notifyDataSetChanged()
     }
 

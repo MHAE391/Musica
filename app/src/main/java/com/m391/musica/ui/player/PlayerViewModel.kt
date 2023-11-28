@@ -3,25 +3,25 @@ package com.m391.musica.ui.player
 import android.app.Application
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.widget.ImageView
 import android.widget.SeekBar
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.m391.musica.R
 import com.m391.musica.models.SongModel
+import kotlinx.coroutines.launch
 
 class PlayerViewModel(
     private val app: Application,
     selectedPlaying: Int,
-    private val deviceSongs: LiveData<List<SongModel>>
-) :
-    ViewModel(), LifecycleObserver {
+    private val deviceSongs: LiveData<List<SongModel>>,
+    private val checkFavourite: suspend (Long) -> Boolean
+) : ViewModel(), LifecycleObserver {
     private val currentPlaying = MutableLiveData<Int>()
     private val _currentPlayingSong = MutableLiveData<SongModel>()
     val currentPlayingSong: LiveData<SongModel> = _currentPlayingSong
@@ -38,10 +38,18 @@ class PlayerViewModel(
         }
     }
 
+    private val _isFavourite = MutableLiveData<Boolean>()
+    val isFavourite: LiveData<Boolean> = _isFavourite
+
     init {
         currentPlaying.postValue(selectedPlaying)
         _currentPlayingSong.postValue(deviceSongs.value!![selectedPlaying])
         _currentProgress.postValue(0)
+        _currentPlayingSong.observeForever {
+            viewModelScope.launch {
+                _isFavourite.postValue(checkFavourite(it.id))
+            }
+        }
     }
 
     private fun startAudio(playPause: ImageView, startingPoint: Int, uri: String) {
@@ -53,11 +61,7 @@ class PlayerViewModel(
             setOnCompletionListener {
                 pauseAudio()
                 setProgress(0)
-                setPlayPauseButtonImage(
-                    playPause,
-                    app.getString(R.string.play),
-                    R.drawable.baseline_play_arrow_24
-                )
+                onNextPreviousButtonClicked(1, playPause)
             }
             pauseAudio()
             handler.postDelayed(runnable, 10)
@@ -90,9 +94,7 @@ class PlayerViewModel(
     fun setProgressListener(seekBar: SeekBar) {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(
-                seekBar: SeekBar?,
-                progress: Int,
-                fromUser: Boolean
+                seekBar: SeekBar?, progress: Int, fromUser: Boolean
             ) {
                 if (fromUser) {
                     setProgress(progress.toLong())
@@ -131,20 +133,17 @@ class PlayerViewModel(
 
     fun setOnPauseButtonClicked(playPause: ImageView) {
         setPlayPauseButtonImage(
-            playPause,
-            app.getString(R.string.play),
-            R.drawable.baseline_play_arrow_24
+            playPause, app.getString(R.string.play), R.drawable.baseline_play_arrow_24
         )
         pauseAudio()
     }
 
     fun setOnPlayButtonClicked(playPause: ImageView) {
         setPlayPauseButtonImage(
-            playPause,
-            app.getString(R.string.pause),
-            R.drawable.baseline_pause_24
+            playPause, app.getString(R.string.pause), R.drawable.baseline_pause_24
         )
         startAudio(playPause, currentProgress.value!!.toInt(), currentPlayingSong.value!!.filePath)
     }
+
 
 }

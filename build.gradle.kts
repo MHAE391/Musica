@@ -4,6 +4,10 @@ buildscript {
         val nav_version = "2.7.5"
         //noinspection GradleDependency
         classpath("androidx.navigation:navigation-safe-args-gradle-plugin:$nav_version")
+
+    }
+    plugins {
+        id("com.google.devtools.ksp") version "1.8.10-1.0.9" apply false
     }
 }
 plugins {

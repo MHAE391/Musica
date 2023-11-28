@@ -51,11 +51,15 @@ object Binding {
     }
 
     private fun getAlbumArt(uri: String): ByteArray? {
-        val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(uri)
-        val art = retriever.embeddedPicture
-        retriever.release()
-        return art
+        return try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(uri)
+            val art = retriever.embeddedPicture
+            retriever.release()
+            art
+        } catch (e: Exception) {
+            null
+        }
     }
 
     @SuppressLint("SimpleDateFormat")
