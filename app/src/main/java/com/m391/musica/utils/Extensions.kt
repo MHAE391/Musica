@@ -31,7 +31,6 @@ fun <T> RecyclerView.setupLinearRecycler(
 }
 
 fun List<Music>.toDisplayModel(): List<SongModel> {
-    var pos = 0
     return map { music ->
         SongModel(
             id = music.id,
@@ -39,7 +38,6 @@ fun List<Music>.toDisplayModel(): List<SongModel> {
             artist = music.artist,
             duration = music.duration,
             album = music.album,
-            position = pos++,
             filePath = music.filePath
         )
     }

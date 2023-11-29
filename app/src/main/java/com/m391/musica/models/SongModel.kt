@@ -9,6 +9,5 @@ data class SongModel(
     val artist: String,
     val album: String,
     val duration: Long,
-    val filePath: String,
-    val position: Int
+    val filePath: String
 )

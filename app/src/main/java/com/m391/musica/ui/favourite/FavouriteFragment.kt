@@ -55,7 +55,7 @@ class FavouriteFragment : Fragment() {
         val adapter = SongAdapter {
             findNavController().navigate(
                 FavouriteFragmentDirections.actionFavouriteFragmentToPlayerFragment(
-                    it.position,
+                    viewModel.songs.value!!.indexOf(it),
                     getString(R.string.favourite)
                 )
             )

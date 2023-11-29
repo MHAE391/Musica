@@ -8,13 +8,15 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.m391.musica.R
-import com.m391.musica.database.AppDatabase
-import com.m391.musica.database.MusicDAO
 import com.m391.musica.databinding.FragmentPlayerBinding
 import com.m391.musica.ui.shared_view_models.SongsViewModel
 import com.m391.musica.utils.toDatabaseModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlayerFragment : Fragment() {
     private val binding: FragmentPlayerBinding by lazy {
@@ -58,10 +60,15 @@ class PlayerFragment : Fragment() {
         }
         binding.playPause.setOnClickListener {
             if (it.tag == getString(R.string.play)) {
-                viewModel.setOnPlayButtonClicked(binding.playPause)
+                viewModel.setOnPlayButtonClicked()
             } else {
-                viewModel.setOnPauseButtonClicked(binding.playPause)
+                viewModel.setOnPauseButtonClicked()
             }
+        }
+        viewModel.isPlaying.observe(viewLifecycleOwner) {
+            if (it) {
+                setPauseImage(binding.playPause)
+            } else setPlayImage(binding.playPause)
         }
         viewModel.setProgressListener(binding.durationSeekBar)
         viewModel.isFavourite.observe(viewLifecycleOwner) {
@@ -90,6 +97,16 @@ class PlayerFragment : Fragment() {
     private fun setNotFavoriteImage(imageView: ImageView) {
         imageView.tag = getString(R.string.not_favourite)
         imageView.setImageResource(R.drawable.baseline_favorite_border_24)
+    }
+
+    private fun setPlayImage(imageView: ImageView) {
+        imageView.tag = getString(R.string.play)
+        imageView.setImageResource(R.drawable.baseline_play_arrow_24)
+    }
+
+    private fun setPauseImage(imageView: ImageView) {
+        imageView.tag = getString(R.string.pause)
+        imageView.setImageResource(R.drawable.baseline_pause_24)
     }
 
 }

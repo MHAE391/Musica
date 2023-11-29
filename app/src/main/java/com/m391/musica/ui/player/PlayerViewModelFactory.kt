@@ -8,7 +8,7 @@ import com.m391.musica.models.SongModel
 
 class PlayerViewModelFactory(
     private val app: Application,
-    private val currentPlaying: Int,
+    private val song: Int,
     private val deviceSongs: LiveData<List<SongModel>>,
     private val checkFavourite: suspend (Long) -> Boolean
 ) :
@@ -16,7 +16,7 @@ class PlayerViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PlayerViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return PlayerViewModel(app, currentPlaying, deviceSongs, checkFavourite) as T
+            return PlayerViewModel(app, song, deviceSongs, checkFavourite) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

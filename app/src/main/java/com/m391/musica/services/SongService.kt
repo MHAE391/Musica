@@ -45,7 +45,6 @@ class SongService {
 
             )
         if (songCursor != null && songCursor.moveToFirst()) {
-            var position = 0
             val idColumn = songCursor.getColumnIndexOrThrow(SONG_ID)
             val titleColumn = songCursor.getColumnIndexOrThrow(SONG_TITLE)
             val artistColumn = songCursor.getColumnIndexOrThrow(SONG_ARTIST)
@@ -66,8 +65,7 @@ class SongService {
                         artist,
                         album,
                         duration,
-                        filePath,
-                        position++
+                        filePath
                     )
                 songsList.add(song)
             } while (songCursor.moveToNext())

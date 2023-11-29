@@ -1,5 +1,8 @@
 package com.m391.musica.ui.home
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -8,8 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -33,6 +38,28 @@ class HomeFragment : Fragment() {
         FragmentHomeBinding.inflate(layoutInflater)
     }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            var flag = false
+            permissions.entries.forEach { entry ->
+                val isGranted = entry.value
+                if (!isGranted) {
+                    Toast.makeText(
+                        requireContext(),
+                        "You Have To accept Media & Notification Permissions",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    flag = true
+                }
+            }
+            if (!flag) {
+                lifecycleScope.launch {
+                    songsViewModel.refreshSongs()
+                    songsViewModel.refreshFavouriteSongs()
+                }
+            }
+        }
+
     private val musicDAO: MusicDAO by lazy {
         AppDatabase.getDatabase(requireActivity().applicationContext).musicDao()
     }
@@ -48,21 +75,45 @@ class HomeFragment : Fragment() {
     }
 
 
+    @SuppressLint("InlinedApi")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
-
+        if (!checkPermissions()) requestPermissions()
         return binding.root
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun requestPermissions() {
+        requestPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        )
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun checkPermissions(): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.READ_MEDIA_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onResume() {
         super.onResume()
-        lifecycleScope.launch {
-            songsViewModel.refreshSongs()
-        }
+        if (checkPermissions())
+            lifecycleScope.launch {
+                songsViewModel.refreshSongs()
+            }
+        else requestPermissions()
     }
 
     override fun onPause() {
@@ -97,12 +148,11 @@ class HomeFragment : Fragment() {
         val adapter = SongAdapter {
             findNavController().navigate(
                 HomeFragmentDirections.actionHomeFragmentToPlayerFragment(
-                    it.position,
+                    songsViewModel.deviceSongs.value!!.indexOf(it),
                     getString(R.string.home)
                 )
             )
         }
         binding.imagesRecyclerView.setupLinearRecycler(adapter)
     }
-
 }

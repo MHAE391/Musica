@@ -29,22 +29,14 @@ class SongsViewModel(
     private val _favouriteSongs = MutableLiveData<List<SongModel>>()
     val favouriteSongs: LiveData<List<SongModel>> = _favouriteSongs
 
-    init {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                refreshSongs()
-                refreshFavouriteSongs()
-            }
-        }
-    }
 
-    suspend fun refreshSongs() {
+    suspend fun refreshSongs() = withContext(Dispatchers.IO) {
         _deviceSongs.postValue(
             songService.getAllSongs(app.applicationContext)
         )
     }
 
-    suspend fun refreshFavouriteSongs() {
+    suspend fun refreshFavouriteSongs() =  withContext(Dispatchers.IO){
         _favouriteSongs.postValue(musicDAO.getAll().toDisplayModel())
     }
 

@@ -50,7 +50,7 @@ object Binding {
         }
     }
 
-    private fun getAlbumArt(uri: String): ByteArray? {
+    fun getAlbumArt(uri: String): ByteArray? {
         return try {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(uri)

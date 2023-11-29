@@ -103,7 +103,7 @@
                     android:layout_gravity="center"
                     android:layout_weight="4"
                     android:gravity="center"
-                    android:time="@{viewModel.currentProgress}"
+                    android:time="@{viewModel.currentSongProgress}"
                     tools:ignore="NestedWeights" />
 
                 <SeekBar
@@ -112,7 +112,7 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:progress_time="@{viewModel.currentProgress}"
+                    android:progress_time="@{viewModel.currentSongProgress}"
                     android:seek_time="@{viewModel.currentPlayingSong.duration}" />
 
                 <TextView
