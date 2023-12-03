@@ -96,4 +96,11 @@ object Binding {
         seekBar.progress = durationInMillis.toInt()
     }
 
+    @BindingAdapter("android:favourite")
+    @JvmStatic
+    fun setFavourite(imageView: ImageView, isFavourite: Boolean) {
+        if (isFavourite) setFavoriteImage(imageView)
+        else setNotFavoriteImage(imageView)
+    }
+
 }

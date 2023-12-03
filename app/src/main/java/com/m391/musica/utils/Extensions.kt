@@ -1,5 +1,6 @@
 package com.m391.musica.utils
 
+import android.widget.ImageView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -9,6 +10,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.m391.musica.R
 import com.m391.musica.database.Music
 import com.m391.musica.models.SongModel
 
@@ -52,4 +54,14 @@ fun SongModel.toDatabaseModel(): Music {
         duration = duration,
         filePath = filePath
     )
+}
+
+fun setFavoriteImage(imageView: ImageView) {
+    imageView.tag = imageView.context.getString(R.string.favourite)
+    imageView.setImageResource(R.drawable.baseline_favorite_24)
+}
+
+fun setNotFavoriteImage(imageView: ImageView) {
+    imageView.tag = imageView.context.getString(R.string.not_favourite)
+    imageView.setImageResource(R.drawable.baseline_favorite_border_24)
 }

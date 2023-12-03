@@ -13,10 +13,9 @@ import androidx.navigation.fragment.navArgs
 import com.m391.musica.R
 import com.m391.musica.databinding.FragmentPlayerBinding
 import com.m391.musica.ui.shared_view_models.SongsViewModel
-import com.m391.musica.utils.toDatabaseModel
-import kotlinx.coroutines.Dispatchers
+import com.m391.musica.utils.setFavoriteImage
+import com.m391.musica.utils.setNotFavoriteImage
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PlayerFragment : Fragment() {
     private val binding: FragmentPlayerBinding by lazy {
@@ -26,19 +25,16 @@ class PlayerFragment : Fragment() {
     private val songsViewModel: SongsViewModel by activityViewModels()
 
     private val viewModel: PlayerViewModel by viewModels {
-        if (args.songDestination == getString(R.string.home))
-            PlayerViewModelFactory(
-                requireActivity().application,
-                args.songPosition,
-                songsViewModel.deviceSongs,
-                songsViewModel.checkFavourite
-            )
-        else PlayerViewModelFactory(
+
+        PlayerViewModelFactory(
             requireActivity().application,
             args.songPosition,
-            songsViewModel.favouriteSongs,
-            songsViewModel.checkFavourite
+            if (args.songDestination == getString(R.string.home)) songsViewModel.deviceSongs else songsViewModel.favouriteSongs,
+            songsViewModel.checkFavourite,
+            songsViewModel.setSongFavourite,
+            songsViewModel.setSongNotFavourite
         )
+
     }
 
     override fun onCreateView(
@@ -53,50 +49,62 @@ class PlayerFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         binding.next.setOnClickListener {
-            viewModel.onNextPreviousButtonClicked(1, binding.playPause)
+            viewModel.nextPrevious(1)
         }
         binding.previous.setOnClickListener {
-            viewModel.onNextPreviousButtonClicked(-1, binding.playPause)
+            viewModel.nextPrevious(-1)
         }
         binding.playPause.setOnClickListener {
             if (it.tag == getString(R.string.play)) {
-                viewModel.setOnPlayButtonClicked()
+                viewModel.play()
             } else {
-                viewModel.setOnPauseButtonClicked()
-            }
-        }
-        viewModel.isPlaying.observe(viewLifecycleOwner) {
-            if (it) {
-                setPauseImage(binding.playPause)
-            } else setPlayImage(binding.playPause)
-        }
-        viewModel.setProgressListener(binding.durationSeekBar)
-        viewModel.isFavourite.observe(viewLifecycleOwner) {
-            if (it == true) {
-                setFavoriteImage(binding.favorite)
-            } else {
-                setNotFavoriteImage(binding.favorite)
+                viewModel.pause()
             }
         }
         binding.favorite.setOnClickListener {
             if (it.tag == getString(R.string.favourite)) {
-                setNotFavoriteImage(binding.favorite)
-                songsViewModel.setSongNotFavourite(viewModel.currentPlayingSong.value!!.toDatabaseModel())
+                setNotFavorite(binding.favorite)
             } else {
-                setFavoriteImage(binding.favorite)
-                songsViewModel.setSongFavorite(viewModel.currentPlayingSong.value!!.toDatabaseModel())
+                setFavorite(binding.favorite)
             }
+        }
+        viewModel.setProgressListener(binding.durationSeekBar)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        lifecycleScope.launch {
+            viewModel.startCheckFavourite(viewLifecycleOwner)
+        }
+
+        viewModel.isPlaying.observe(viewLifecycleOwner) {
+            if (it) setPauseImage(binding.playPause)
+            else setPlayImage(binding.playPause)
         }
     }
 
-    private fun setFavoriteImage(imageView: ImageView) {
-        imageView.tag = getString(R.string.favourite)
-        imageView.setImageResource(R.drawable.baseline_favorite_24)
+    override fun onPause() {
+        super.onPause()
+        lifecycleScope.launch {
+            viewModel.stopCheckFavourite(viewLifecycleOwner)
+            viewModel.isPlaying.removeObservers(viewLifecycleOwner)
+            viewModel.isFavourite.removeObservers(viewLifecycleOwner)
+        }
     }
 
-    private fun setNotFavoriteImage(imageView: ImageView) {
-        imageView.tag = getString(R.string.not_favourite)
-        imageView.setImageResource(R.drawable.baseline_favorite_border_24)
+    private fun setFavorite(imageView: ImageView) {
+        setFavoriteImage(imageView)
+        lifecycleScope.launch {
+            viewModel.setFavourite()
+        }
+    }
+
+    private fun setNotFavorite(imageView: ImageView) {
+        setNotFavoriteImage(imageView)
+        lifecycleScope.launch {
+            viewModel.setNotFavourite()
+        }
     }
 
     private fun setPlayImage(imageView: ImageView) {
@@ -108,5 +116,4 @@ class PlayerFragment : Fragment() {
         imageView.tag = getString(R.string.pause)
         imageView.setImageResource(R.drawable.baseline_pause_24)
     }
-
 }

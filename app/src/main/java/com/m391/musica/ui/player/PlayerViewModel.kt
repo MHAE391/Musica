@@ -6,84 +6,100 @@ import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.content.ServiceConnection
-import android.media.MediaPlayer
-import android.net.Uri
-import android.os.Handler
+import android.os.Build
 import android.os.IBinder
-import android.os.Looper
-import android.widget.ImageView
 import android.widget.SeekBar
-import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m391.musica.R
+import com.m391.musica.database.Music
 import com.m391.musica.models.SongModel
-import com.m391.musica.services.MediaPlayerManger
-import com.m391.musica.services.MediaPlayerManger.currentPlayList
-import com.m391.musica.services.MediaPlayerManger.currentPlayingSong
-import com.m391.musica.services.MediaPlayerManger.currentProgress
-import com.m391.musica.services.MediaPlayerManger.mediaPlayer
-import com.m391.musica.services.MediaPlayerManger.onNextPreviousPress
-import com.m391.musica.services.MediaPlayerManger.pauseAudio
-import com.m391.musica.services.MediaPlayerManger.playAudio
-import com.m391.musica.services.MediaPlayerManger.setProgress
-import com.m391.musica.services.MediaPlayerManger.showNotification
+import com.m391.musica.services.IPlayService
 import com.m391.musica.services.PlayService
+import com.m391.musica.utils.toDatabaseModel
 import kotlinx.coroutines.launch
 
 class PlayerViewModel(
     private val app: Application,
-    startingSong: Int,
+    private val startingSong: Int,
     private val deviceSongs: LiveData<List<SongModel>>,
-    private val checkFavourite: suspend (Long) -> Boolean
-) : ViewModel(), LifecycleObserver, ServiceConnection {
-
-    val currentPlayingSong: LiveData<SongModel> = MediaPlayerManger.currentPlaying
-    val isPlaying: LiveData<Boolean> = MediaPlayerManger.isPlaying
-    val currentSongProgress: LiveData<Long> = currentProgress
-
-
+    private val checkFavourite: suspend (Long) -> Boolean,
+    private val songFavourite: suspend (Music) -> Unit,
+    private val songNotFavourite: suspend (Music) -> Unit
+) : ViewModel(), IPlayService, ServiceConnection {
     @SuppressLint("StaticFieldLeak")
     private lateinit var playService: PlayService
+    private val _isPlaying = MutableLiveData<Boolean>()
+    val isPlaying: LiveData<Boolean> = _isPlaying
 
+
+    private val _playingSong = MutableLiveData<SongModel>()
+    val playingSong: LiveData<SongModel> = _playingSong
 
     private val _isFavourite = MutableLiveData<Boolean>()
     val isFavourite: LiveData<Boolean> = _isFavourite
 
+    private val _currentProgress = MutableLiveData<Long>()
+    val currentProgress: LiveData<Long> = _currentProgress
+
+    private val updateSong: (SongModel) -> Unit =
+        { song ->
+            _playingSong.postValue(song)
+        }
+    private val updatePlaying: (Boolean) -> Unit =
+        { playing ->
+            _isPlaying.postValue(playing)
+        }
+
+    private val updateProgress: (Long) -> Unit =
+        { progress ->
+            _currentProgress.postValue(progress)
+        }
+
     init {
-        currentPlayList = (deviceSongs.value)
-        if (MediaPlayerManger.currentPlayingSong != deviceSongs.value!![startingSong]) {
-            pauseAudio(app)
-            currentProgress.postValue(0)
-        }
-        MediaPlayerManger.currentPlayingSong = (deviceSongs.value!![startingSong])
-        MediaPlayerManger.currentPlaying.postValue(MediaPlayerManger.currentPlayingSong)
-        currentPlayingSong.observeForever {
-            viewModelScope.launch {
-                _isFavourite.postValue(checkFavourite(it.id))
-            }
-        }
+        val intentService = Intent(app, PlayService::class.java)
+        app.bindService(intentService, this, BIND_AUTO_CREATE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            app.startForegroundService(intentService)
+        else
+            app.startService(intentService)
+
+        updateSong.invoke(getCurrentPlayingSong())
     }
 
-    private fun startAudio() {
-        playAudio(app.applicationContext, 0)
-        startNotificationService()
+    override fun play() {
+        playService.play()
     }
 
-    private fun stopAudio() {
-        pauseAudio(app.applicationContext)
+    override fun pause() {
+        playService.pause()
     }
 
-    fun onNextPreviousButtonClicked(value: Int, playPause: ImageView) {
-        onNextPreviousPress(
-            app.applicationContext,
-            value,
-            (playPause.tag == app.getString(R.string.pause))
+    override fun nextPrevious(value: Int) {
+        playService.nextPrevious(value)
+    }
+
+
+    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+        val binder = service as PlayService.LocalBinder
+        playService = binder.getService()
+        val old = playService.getCurrentPlaying()
+        playService.setupData(
+            updateSong,
+            deviceSongs.value!!,
+            getCurrentPlayingSong(),
+            updatePlaying,
+            updateProgress
         )
+        if (getCurrentPlayingSong() == old)
+            _isPlaying.postValue(playService.getIsPlaying())
+        else {
+            playService.pause()
+            playService.setNewProgress(0)
+        }
     }
-
 
     fun setProgressListener(seekBar: SeekBar) {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -91,8 +107,7 @@ class PlayerViewModel(
                 seekBar: SeekBar?, progress: Int, fromUser: Boolean
             ) {
                 if (fromUser) {
-                    setProgress(progress.toLong())
-                    mediaPlayer?.seekTo(progress)
+                    playService.setNewProgress(progress.toLong())
                 }
             }
 
@@ -107,31 +122,36 @@ class PlayerViewModel(
     }
 
 
-    fun setOnPauseButtonClicked() {
-        stopAudio()
-    }
-
-    fun setOnPlayButtonClicked() {
-        startAudio()
-    }
-
-    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        val binder = service as PlayService.LocalBinder
-        playService = binder.getService()
-        showNotification(MediaPlayerManger.currentPlayingSong!!, 1, app.applicationContext)
-    }
-
     override fun onServiceDisconnected(name: ComponentName?) {
 
-
     }
 
+    private fun getCurrentPlayingSong(): SongModel {
+        return deviceSongs.value!![startingSong]
+    }
 
-    private fun startNotificationService() {
-        if (mediaPlayer != null) {
-            val intentService = Intent(app, PlayService::class.java)
-            app.bindService(intentService, this, BIND_AUTO_CREATE)
-            app.startService(intentService)
+    suspend fun startCheckFavourite(viewLifecycleOwner: LifecycleOwner) {
+        _playingSong.observe(viewLifecycleOwner) {
+            if (it != null)
+                viewModelScope.launch {
+                    _isFavourite.postValue(checkFavourite.invoke(it.id))
+                }
+        }
+    }
+
+    fun stopCheckFavourite(viewLifecycleOwner: LifecycleOwner) {
+        _playingSong.removeObservers(viewLifecycleOwner)
+    }
+
+    suspend fun setFavourite() {
+        viewModelScope.launch {
+            songFavourite(playingSong.value!!.toDatabaseModel())
+        }
+    }
+
+    suspend fun setNotFavourite() {
+        viewModelScope.launch {
+            songNotFavourite(playingSong.value!!.toDatabaseModel())
         }
     }
 }

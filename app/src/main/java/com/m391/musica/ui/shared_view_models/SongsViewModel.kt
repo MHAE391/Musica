@@ -36,23 +36,25 @@ class SongsViewModel(
         )
     }
 
-    suspend fun refreshFavouriteSongs() =  withContext(Dispatchers.IO){
+    suspend fun refreshFavouriteSongs() = withContext(Dispatchers.IO) {
         _favouriteSongs.postValue(musicDAO.getAll().toDisplayModel())
     }
 
-    fun setSongFavorite(song: Music) {
-        viewModelScope.launch {
-            musicDAO.insert(
-                song
-            )
-        }
-    }
 
-    fun setSongNotFavourite(song: Music) {
-        viewModelScope.launch {
-            musicDAO.delete(song)
+    val setSongFavourite: suspend (Music) -> Unit =
+        { music ->
+            withContext(Dispatchers.IO) {
+                musicDAO.insert(
+                    music
+                )
+            }
         }
-    }
+    val setSongNotFavourite: suspend (Music) -> Unit =
+        { music ->
+            withContext(Dispatchers.IO) {
+                musicDAO.delete(music)
+            }
+        }
 
     val checkFavourite: suspend (Long) -> Boolean =
         { id ->

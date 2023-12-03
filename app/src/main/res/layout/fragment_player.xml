@@ -36,12 +36,13 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:gravity="center"
-                android:text="@{viewModel.currentPlayingSong.title}"
+                android:text="@{viewModel.playingSong.title}"
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="italic|bold"
                 android:visibility="visible"
                 tools:ignore="RelativeOverlap" />
+
         </RelativeLayout>
 
         <LinearLayout
@@ -59,7 +60,7 @@
                 android:layout_gravity="center"
                 android:layout_marginBottom="50dp"
                 android:contentDescription="@string/app_name"
-                android:imageUrl="@{viewModel.currentPlayingSong.filePath}" />
+                android:imageUrl="@{viewModel.playingSong.filePath}" />
 
             <TextView
                 android:id="@+id/artist"
@@ -68,10 +69,11 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:padding="5dp"
-                android:text="@{viewModel.currentPlayingSong.artist}"
+                android:text="@{viewModel.playingSong.artist}"
                 android:textSize="20sp"
                 android:textStyle="italic|normal"
                 android:visibility="visible" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -103,8 +105,9 @@
                     android:layout_gravity="center"
                     android:layout_weight="4"
                     android:gravity="center"
-                    android:time="@{viewModel.currentSongProgress}"
+                    android:time="@{viewModel.currentProgress}"
                     tools:ignore="NestedWeights" />
+
 
                 <SeekBar
                     android:id="@+id/duration_seek_bar"
@@ -112,8 +115,8 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:progress_time="@{viewModel.currentSongProgress}"
-                    android:seek_time="@{viewModel.currentPlayingSong.duration}" />
+                    android:progress_time="@{viewModel.currentProgress}"
+                    android:seek_time="@{viewModel.playingSong.duration}" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -121,7 +124,7 @@
                     android:layout_gravity="center"
                     android:layout_weight="4"
                     android:gravity="center"
-                    android:time="@{viewModel.currentPlayingSong.duration}" />
+                    android:time="@{viewModel.playingSong.duration}" />
 
 
             </LinearLayout>
@@ -177,6 +180,7 @@
                     android:layout_margin="5dp"
                     android:layout_weight="1"
                     android:contentDescription="@string/app_name"
+                    android:favourite="@{viewModel.isFavourite()}"
                     android:src="@drawable/baseline_favorite_border_24" />
             </LinearLayout>
         </LinearLayout>
